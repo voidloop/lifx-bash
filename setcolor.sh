@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# setcolor.sh <hue> <saturation> <brightness> <kelvin> <duration>
+# setcolor.sh <hue> <saturation> <brightness> <kelvin> <duration> [target]
 #
 # Marco Esposito M. <marco.esposito@gmail.com>
 # Last update: 20150917
@@ -11,8 +11,8 @@ TAGGED=1
 ADDRESSABLE=1
 SOURCE=00000000
 # frame address
-TARGET=0000000000000000 #???
-ACK_REQUIRED=1 # [0,1]
+TARGET=000000000000 # no little endian conversion 
+ACK_REQUIRED=0 # [0,1]
 RES_REQUIRED=0 # [0,1]
 SEQUENCE=0 # [0,255]
 # protocol header
@@ -25,6 +25,12 @@ BRIGHTNESS=$3
 KELVIN=$4
 DURATION=$5
 
+# target from command line
+if [ -n $6 ]; then
+	TAGGED=0
+	TARGET=$6
+fi  
+
 # this is the final packet
 PACKET=
 
@@ -32,10 +38,20 @@ PACKET=
 function packdata() 
 {
 	local data=$1
+    # little endian
 	for (( i=${#data}-2; i>=0; i=i-2 )); do
 		PACKET=${PACKET}${data:$i:2}
 	done
 }
+
+# packdata_no <data> 
+function packdata_no() 
+{
+	local data=$1
+    # no little endian conversion
+	PACKET=${PACKET}${data}
+}
+
 
 # bin2hex <number> 
 function bin2hex() 
@@ -57,18 +73,18 @@ function printpacket()
 }
 
 # the dirty work is here
-packdata $(bin2hex 00${TAGGED}${ADDRESSABLE}010000000000) # 16
-packdata ${SOURCE} #source 32
-packdata ${TARGET} # target 64
-packdata 000000000000 # reserved 48
+packdata $(bin2hex 00${TAGGED}${ADDRESSABLE}010000000000) # 16 bits
+packdata ${SOURCE} # source 32 
+packdata_no ${TARGET}0000 # target 64
+packdata_no 000000000000 # reserved 48
 packdata $(bin2hex 000000${ACK_REQUIRED}${RES_REQUIRED}) # 8
 packdata $(printf '%02X' ${SEQUENCE}) # sequence 8
-packdata 0000000000000000 # reserved 64
+packdata_no 0000000000000000 # reserved 64
 packdata $(printf '%04X' ${TYPE}) # type 16
-packdata 0000 # reserver 16
+packdata_no 0000 # reserver 16
 
 # payload 
-packdata 00   # reserved 8
+packdata_no 00   # reserved 8
 packdata $(printf '%04X' ${HUE}) # hue 16
 packdata $(printf '%04X' ${SATURATION}) # saturation 16
 packdata $(printf '%04X' ${BRIGHTNESS}) # brightness 16
