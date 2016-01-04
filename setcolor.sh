@@ -26,7 +26,7 @@ KELVIN=$4
 DURATION=$5
 
 # target from command line
-if [ -n $6 ]; then
+if [ ! -z $6 ]; then
 	TAGGED=0
 	TARGET=$6
 fi  
