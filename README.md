@@ -1,7 +1,7 @@
 # lifx-bash
 
 You can use the output of setcolor.sh script in combination with
-SoCAT to sent an UDP datagram to LIFX bulbs. This is the way:
+SoCAT to send an UDP packet to LIFX bulbs. This is the way:
 
 ```bash
 for x in $(seq 1 1000 10000); do                 
